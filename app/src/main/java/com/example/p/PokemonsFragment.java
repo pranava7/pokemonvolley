@@ -3,6 +3,8 @@ package com.example.p;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -10,11 +12,13 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.agrawalsuneet.dotsloader.loaders.AllianceLoader;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -34,11 +38,12 @@ public class PokemonsFragment extends Fragment {
 
     private RecyclerView mRecyclerView;
     private PokemonItemAdapter mPokemonItemAdapter;
-    private ArrayList<PokemonItem> mPokemonList;
+    private ArrayList<PokemonItem> mPokemonList = null;
     private RequestQueue mRequestQueue;
     private String mPokemonname;
-    private String finalimageurl;
+    static String pokemonUrl;
 
+    AllianceLoader allianceLoader ;
 
 
     @Nullable
@@ -53,12 +58,18 @@ public class PokemonsFragment extends Fragment {
 
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
+        allianceLoader = view.findViewById(R.id.progressLoader);
 
         mPokemonList = new ArrayList<PokemonItem>();
 
 
         mRequestQueue = Volley.newRequestQueue(Objects.requireNonNull(getContext()));
+//        if (mPokemonList == null) {
+//            parseJSON();
+//        } else {
+//            mPokemonItemAdapter = new PokemonItemAdapter(getActivity(), mPokemonList);
+//            mRecyclerView.setAdapter(mPokemonItemAdapter);
+//        }
         parseJSON();
 
 
@@ -78,43 +89,44 @@ public class PokemonsFragment extends Fragment {
                     public void onResponse(JSONObject response) {
                         try {
                             JSONArray jsonArray = response.getJSONArray("results");
+                            allianceLoader.setVisibility(View.GONE);
 
                             for (int i = 0; i < jsonArray.length(); i++) {
-                                final JSONObject result = jsonArray.getJSONObject(i);
+                                JSONObject result = jsonArray.getJSONObject(i);
 
 
-                                String pokemonUrl = result.getString("url");
+                                pokemonUrl = result.getString("url");
+                                String pokemonName = result.getString("name");
+                                String pokemonId = pokemonUrl.substring(34 , pokemonUrl.length() - 1);
 
-
-                                JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, pokemonUrl, null,
-                                        new Response.Listener<JSONObject>() {
-                                            @Override
-                                            public void onResponse(JSONObject response1) {
-
-
-                                                try {
-
-                                                    String pokemonName = result.getString("name");
-                                                    mPokemonname = pokemonName;
-                                                    JSONObject sprites = response1.getJSONObject( "sprites" );
-                                                    String front_image = sprites.getString("front_default");
-                                                    finalimageurl = front_image;
-                                                    mPokemonList.add(new PokemonItem(finalimageurl, mPokemonname));
-
-                                                } catch (JSONException e) {
-                                                    e.printStackTrace();
-                                                }
-
-                                            }
-                                        }, new Response.ErrorListener() {
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-                                        error.printStackTrace();
-                                    }
-                                });
-
-
-                                mRequestQueue.add(request);
+                                String pokemonImageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/" + pokemonId + ".png" ;
+                                mPokemonList.add(new PokemonItem(pokemonImageUrl , pokemonName , pokemonUrl));
+//                                JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, pokemonUrl, null,
+//                                        new Response.Listener<JSONObject>() {
+//                                            @Override
+//                                            public void onResponse(JSONObject response1) {
+//
+//
+//                                                try {
+//
+//                                                    String pokemonName = result.getString("name");
+//                                                    mPokemonname = pokemonName;
+//                                                    JSONObject sprites = response1.getJSONObject( "sprites" );
+//                                                    String front_image = sprites.getString("front_default");
+//                                                    finalimageurl = front_image;
+//                                                    mPokemonList.add(new PokemonItem(finalimageurl, mPokemonname));
+//
+//                                                } catch (JSONException e) {
+//                                                    e.printStackTrace();
+//                                                }
+//
+//                                            }
+//                                        }, new Response.ErrorListener() {
+//                                    @Override
+//                                    public void onErrorResponse(VolleyError error) {
+//                                        error.printStackTrace();
+//                                    }
+//                                })
                             }
 
 
@@ -140,5 +152,7 @@ public class PokemonsFragment extends Fragment {
 
 
     }
+
+
 
 }
